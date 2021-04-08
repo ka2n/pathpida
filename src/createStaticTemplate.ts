@@ -19,6 +19,7 @@ export default (input: string, basepath: string | undefined) => {
     )
     const props: string[] = files
       .map((file, i) => {
+        if (file.startsWith('.')) return ''
         const newUrl = `${url}/${file}`
         const target = path.posix.join(targetDir, file)
         const replacedFile = replacedFiles[i]

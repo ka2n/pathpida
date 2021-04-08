@@ -43,6 +43,7 @@ describe('cli test', () => {
           ''
         )
       ).toBe(result.replace(/\r/g, ''))
+      expect(text).not.toContain('ignoreme')
     }
   })
 })
