@@ -11,7 +11,10 @@ export default (input: string, basepath: string | undefined) => {
   const createPublicString = (targetDir: string, indent: string, url: string, text: string) => {
     indent += '  '
 
-    const files = fs.readdirSync(targetDir).sort()
+    const files = fs
+      .readdirSync(targetDir)
+      .filter(f => !f.startsWith('.'))
+      .sort()
     const replacedFiles = files.map(replaceWithUnderscore)
     const duplicatedInfo = replacedFiles.reduce<Record<string, number[]>>(
       (a, b, i) => ({ ...a, [b]: [...(a[b] ?? []), i] }),
@@ -19,7 +22,6 @@ export default (input: string, basepath: string | undefined) => {
     )
     const props: string[] = files
       .map((file, i) => {
-        if (file.startsWith('.')) return ''
         const newUrl = `${url}/${file}`
         const target = path.posix.join(targetDir, file)
         const replacedFile = replacedFiles[i]
