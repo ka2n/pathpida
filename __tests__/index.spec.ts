@@ -17,33 +17,29 @@ describe('cli test', () => {
     spyLog.mockRestore()
   })
 
-  test('main', async () => {
-    for (const dir of fs.readdirSync('projects')) {
-      resetCache()
+  test.each(fs.readdirSync('projects'))('main: %s', async dir => {
+    beforeEach(resetCache)
 
-      const workingDir = path.join(process.cwd(), 'projects', dir)
-      const { type, input, staticDir, output, trailingSlash } = await getConfig(
-        dir !== 'nuxtjs-no-slash',
-        workingDir
+    const workingDir = path.join(process.cwd(), 'projects', dir)
+    const { type, input, staticDir, output, trailingSlash } = await getConfig(
+      dir !== 'nuxtjs-no-slash',
+      workingDir
+    )
+
+    const result = fs.readFileSync(`${output}/$path.ts`, 'utf8')
+    const basepath = /-basepath$/.test(dir) ? '/foo/bar' : undefined
+    const { filePath, text } = build({ type, input, staticDir, output, trailingSlash, basepath })
+
+    expect(filePath).toBe(`${output}/$path.ts`)
+    expect(
+      text.replace(
+        new RegExp(
+          `${/\\/.test(workingDir) ? `${workingDir.replace(/\\/g, '\\\\')}(/src)?` : workingDir}/`,
+          'g'
+        ),
+        ''
       )
-
-      const result = fs.readFileSync(`${output}/$path.ts`, 'utf8')
-      const basepath = /-basepath$/.test(dir) ? '/foo/bar' : undefined
-      const { filePath, text } = build({ type, input, staticDir, output, trailingSlash, basepath })
-
-      expect(filePath).toBe(`${output}/$path.ts`)
-      expect(
-        text.replace(
-          new RegExp(
-            `${
-              /\\/.test(workingDir) ? `${workingDir.replace(/\\/g, '\\\\')}(/src)?` : workingDir
-            }/`,
-            'g'
-          ),
-          ''
-        )
-      ).toBe(result.replace(/\r/g, ''))
-      expect(text).not.toContain('ignoreme')
-    }
+    ).toBe(result.replace(/\r/g, ''))
+    expect(text).not.toContain('ignoreme')
   })
 })

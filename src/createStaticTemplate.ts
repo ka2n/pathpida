@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { replaceWithUnderscore } from './replaceWithUnderscore'
+import walk from 'ignore-walk'
 
 const normalizeBasePath = (basepath: string | undefined): string => {
   if (typeof basepath === 'string') return basepath.replace(/\/+$/, '')
@@ -8,6 +9,18 @@ const normalizeBasePath = (basepath: string | undefined): string => {
 }
 
 export default (input: string, basepath: string | undefined) => {
+  // Read all valid files
+  const relInput = path.relative(process.cwd(), input)
+  const validFiles = new Set(
+    walk
+      .sync({
+        ignoreFiles: ['.gitignore']
+      })
+      .filter(f => f.startsWith(relInput))
+      .map(f => path.relative(relInput, f))
+      .filter(f => !f.startsWith('..'))
+  )
+
   const createPublicString = (targetDir: string, indent: string, url: string, text: string) => {
     indent += '  '
 
@@ -19,9 +32,9 @@ export default (input: string, basepath: string | undefined) => {
     )
     const props: string[] = files
       .map((file, i) => {
-        if (file.startsWith('.')) return ''
         const newUrl = `${url}/${file}`
         const target = path.posix.join(targetDir, file)
+        if (fs.statSync(target).isFile() && !validFiles.has(path.relative(input, target))) return ''
         const replacedFile = replacedFiles[i]
         const valFn = `${indent}${
           duplicatedInfo[replacedFile].length > 1
