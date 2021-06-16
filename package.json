@@ -28,7 +28,8 @@
     "url": "https://github.com/aspida/pathpida/issues"
   },
   "files": [
-    "dist"
+    "dist",
+    "bin"
   ],
   "keywords": [
     "typescript",
