@@ -1,4 +1,5 @@
 import fs from 'fs'
+import { NextConfig } from 'next/dist/server/config-shared'
 import path from 'path'
 
 export type Config = {
@@ -21,9 +22,13 @@ export default async (enableStatic: boolean, dir = process.cwd()): Promise<Confi
   const type = getFrameworkType(dir)
 
   if (type === 'nextjs') {
-    const config = await (
-      await import('next/dist/next-server/server/config')
-    ).default(require('next/constants').PHASE_PRODUCTION_BUILD, dir)
+    let configLoader: (phase: string, dir: string) => Promise<NextConfig>
+    try {
+      configLoader = require('next/dist/server/config').default
+    } catch (err) {
+      configLoader = require('next/dist/next-server/server/config').default
+    }
+    const config = await configLoader(require('next/constants').PHASE_PRODUCTION_BUILD, dir)
     const srcDir = fs.existsSync(path.posix.join(dir, 'pages')) ? dir : path.posix.join(dir, 'src')
     const utilsPath = path.join(srcDir, 'utils')
     const output = fs.existsSync(utilsPath) ? utilsPath : path.join(srcDir, 'lib')
